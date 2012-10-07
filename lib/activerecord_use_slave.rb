@@ -59,7 +59,6 @@ class ActiveRecord::Base
     #
     #   ActiveRecord::Base.using_slave { Person.find }
     def using_slave(&blk)
-      pp ENV.sort
       env = ENV['PADRINO_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['DB'] || 'development'
       using_connection("#{env}_slave", &blk)
     end
