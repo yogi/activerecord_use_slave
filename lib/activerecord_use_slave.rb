@@ -31,7 +31,7 @@ class ActiveRecord::Base
       Thread.current[:activerecord_use_connection] = db
 
       unless ActiveRecord::Base.connection_handler.retrieve_connection_pool(ActiveRecord::Base)
-        ActiveRecord::Base.establish_connection(CONFIG[db.to_s])
+        ActiveRecord::Base.establish_connection(db)
       end
 
       yield
@@ -59,7 +59,8 @@ class ActiveRecord::Base
     #
     #   ActiveRecord::Base.using_slave { Person.find }
     def using_slave(&blk)
-      env = ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['PADRINO_ENV'] || ENV['DB'] || 'development'
+      pp ENV.sort
+      env = ENV['PADRINO_ENV'] || ENV['RAILS_ENV'] || ENV['RACK_ENV'] || ENV['DB'] || 'development'
       using_connection("#{env}_slave", &blk)
     end
   end
