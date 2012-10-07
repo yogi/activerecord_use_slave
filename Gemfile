@@ -1,0 +1,4 @@
+
+gemspec
+
+gem 'mysql2'

@@ -1,0 +1,10 @@
+test:
+  adapter: mysql2
+  database: switch_connection_test
+  username: root
+  password:
+test_slave:
+  adapter: mysql2
+  database: switch_connection_test_slave
+  username: root
+  password:

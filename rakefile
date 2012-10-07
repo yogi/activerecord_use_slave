@@ -1,0 +1,36 @@
+require 'rake/testtask'
+
+ENV["DB"] = "test"
+
+begin
+  require 'tasks/standalone_migrations'
+rescue LoadError => e
+  puts "gem install standalone_migrations to get db:migrate:* tasks! (Error: #{e})"
+end
+
+Rake::TestTask.new do |t|
+  t.libs << 'test'
+  t.test_files = FileList['test/**/*.rb']
+end
+task :test => [:migrate_test_db, :migrate_slave_db]
+
+desc "Run tests"
+task :default => :test
+
+task :migrate_test_db do
+  Rake::Task['db:create'].invoke
+  Rake::Task["db:migrate"].invoke
+end
+
+task :migrate_slave_db do
+  begin
+    ENV["DB"] = "test_slave"
+    Rake::Task['environment'].execute
+    Rake::Task['db:create'].execute
+    Rake::Task["db:migrate"].execute
+  ensure
+    ENV["DB"] = "test"
+    Rake::Task['environment'].execute
+  end
+end
+
