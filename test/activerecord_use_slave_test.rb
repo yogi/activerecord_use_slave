@@ -14,8 +14,13 @@ ActiveRecord::Base.establish_connection(CONFIG["test"])
 class Message < ActiveRecord::Base
 end
 
+class ExcludedEntity < ActiveRecord::Base
+
+end
+
 class ActiveRecordSwitchConnectionTest < Test::Unit::TestCase
   def setup
+    ExcludedEntity.delete_all
     Message.delete_all
     Message.create!
   end
@@ -74,4 +79,16 @@ class ActiveRecordSwitchConnectionTest < Test::Unit::TestCase
     assert_equal 1, Message.count, "should be using test-db, which should have 1 message"
   end
 
+  def test_should_exclude_models_which_should_not_be_switched
+    ActiveRecord::Base.peg_models_to_default_connection(ExcludedEntity)
+
+    ExcludedEntity.create!
+    ActiveRecord::Base.using_connection :test do
+      assert_equal 1, ExcludedEntity.count, "should be using default-db"
+    end
+
+    ActiveRecord::Base.using_connection :test_slave do
+      assert_equal 1, ExcludedEntity.count, "should be using default-db"
+    end
+  end
 end

@@ -4,12 +4,21 @@ class ActiveRecord::Base
     # stores 1 connection_handler for each db so that there is a readily available connection-pool for that db
     @@connection_handlers_by_db ||= {}
 
+    # stores the models that should be pegged to the default connection
+    @@excluded_models ||= {}
+
     alias_method :orig_connection_handler, :connection_handler
+
+    def peg_models_to_default_connection(*models)
+      models.each do |model|
+        @@excluded_models[model] = true
+      end
+    end
 
     # Return a db-specific connection-handler if the flag is set, otherwise return the default one
     #
     def connection_handler
-      if Thread.current[:activerecord_use_connection]
+      if ! @@excluded_models.include?(self) && Thread.current[:activerecord_use_connection]
         @@connection_handlers_by_db[Thread.current[:activerecord_use_connection]] ||=
             ActiveRecord::ConnectionAdapters::ConnectionHandler.new
       else

@@ -11,7 +11,10 @@
 #
 # It's strongly recommended to check this file into your version control system.
 
-ActiveRecord::Schema.define(:version => 20121007150211) do
+ActiveRecord::Schema.define(:version => 20121207093527) do
+
+  create_table "excluded_entities", :force => true do |t|
+  end
 
   create_table "messages", :force => true do |t|
   end
