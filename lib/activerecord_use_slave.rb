@@ -17,7 +17,8 @@ class ActiveRecord::Base
 
     # Return a db-specific connection-handler if the flag is set, otherwise return the default one
     #
-    def connection_handler
+    def connection_handler(spec_symbol = nil)
+      return @@connection_handlers_by_db[spec_symbol] if spec_symbol
       if ! @@excluded_models.include?(self) && Thread.current[:activerecord_use_connection]
         @@connection_handlers_by_db[Thread.current[:activerecord_use_connection]] ||=
             ActiveRecord::ConnectionAdapters::ConnectionHandler.new

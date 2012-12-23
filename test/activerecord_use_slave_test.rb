@@ -34,6 +34,8 @@ class ActiveRecordSwitchConnectionTest < Test::Unit::TestCase
     ActiveRecord::Base.using_connection :test_slave do
       assert_equal 0, Message.count, "should be using slave-db, which shouldn't have any rows"
     end
+    assert_false ActiveRecord::Base.connection_handler(:test_slave).active_connections?, "switched connection should be returned to pool"
+    assert_true ActiveRecord::Base.connection_handler.active_connections?, "default pool's connection should not be closed"
   end
 
   def test_using_connection_should_switch_connections_even_if_its_the_same_as_the_original
