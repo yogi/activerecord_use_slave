@@ -40,9 +40,12 @@ class ActiveRecordSwitchConnectionTest < Test::Unit::TestCase
 
   def test_using_connection_should_switch_connections_even_if_its_the_same_as_the_original
     assert_equal 1, Message.count
+    entered_block = false
     ActiveRecord::Base.using_connection :test do
       assert_equal 1, Message.count, "should be using master-db"
+      entered_block = true
     end
+    assert_true entered_block, "didn't enter using_connection block"
   end
 
   def test_using_slave_should_infer_the_connection_spec_from_current_env
