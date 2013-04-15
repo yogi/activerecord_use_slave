@@ -116,6 +116,10 @@ class ActiveRecordSwitchConnectionTest < Test::Unit::TestCase
     ExcludedEntity.create!
     ActiveRecord::Base.using_connection :test do
       assert_equal 1, ExcludedEntity.count, "should be using default-db"
+
+      ActiveRecord::Base.using_connection :test_slave2 do
+        assert_equal 1, ExcludedEntity.count, "should be using default-db"
+      end
     end
 
     ActiveRecord::Base.using_connection :test_slave do
