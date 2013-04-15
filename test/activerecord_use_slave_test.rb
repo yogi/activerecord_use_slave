@@ -38,11 +38,40 @@ class ActiveRecordSwitchConnectionTest < Test::Unit::TestCase
     assert_true ActiveRecord::Base.connection_handler.active_connections?, "default pool's connection should not be closed"
   end
 
+  def test_using_connection_should_support_nested_calls
+    assert_equal 1, Message.count
+    entered_block = false
+
+    ActiveRecord::Base.using_connection :test_slave do
+      assert_equal 0, Message.count, "should be using slave-db, which shouldn't have any rows"
+      assert_equal "switch_connection_test_slave", ActiveRecord::Base.connection.instance_eval("@config")[:database]
+
+      ActiveRecord::Base.using_connection :test do
+        assert_equal 1, Message.count, "should be using original test-db"
+        assert_equal "switch_connection_test", ActiveRecord::Base.connection.instance_eval("@config")[:database]
+
+        ActiveRecord::Base.using_connection :test_slave2 do
+          entered_block = true
+          assert_equal 0, Message.count, "should be using test-slave-db2, which shouldn't have any rows"
+          assert_equal "switch_connection_test_slave2", ActiveRecord::Base.connection.instance_eval("@config")[:database]
+        end
+      end
+    end
+
+    assert_true entered_block, "didn't enter using_connection block"
+    assert_false ActiveRecord::Base.connection_handler(:test_slave).active_connections?, "switched connection should be returned to pool"
+    assert_true ActiveRecord::Base.connection_handler.active_connections?, "default pool's connection should not be closed"
+    assert_equal "switch_connection_test", ActiveRecord::Base.connection.instance_eval("@config")[:database]
+  end
+
   def test_using_connection_should_switch_connections_even_if_its_the_same_as_the_original
     assert_equal 1, Message.count
+    entered_block = false
     ActiveRecord::Base.using_connection :test do
       assert_equal 1, Message.count, "should be using master-db"
+      entered_block = true
     end
+    assert_true entered_block, "didn't enter using_connection block"
   end
 
   def test_using_slave_should_infer_the_connection_spec_from_current_env
@@ -87,10 +116,22 @@ class ActiveRecordSwitchConnectionTest < Test::Unit::TestCase
     ExcludedEntity.create!
     ActiveRecord::Base.using_connection :test do
       assert_equal 1, ExcludedEntity.count, "should be using default-db"
+
+      ActiveRecord::Base.using_connection :test_slave2 do
+        assert_equal 1, ExcludedEntity.count, "should be using default-db"
+      end
     end
 
     ActiveRecord::Base.using_connection :test_slave do
       assert_equal 1, ExcludedEntity.count, "should be using default-db"
     end
+  end
+
+  def db_connections
+    all_connections.collect {|conn| conn["db"]}
+  end
+
+  def all_connections
+    ActiveRecord::Base.connection.select_all("show full processlist")
   end
 end

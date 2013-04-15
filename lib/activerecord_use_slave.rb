@@ -1,3 +1,4 @@
+require 'connection_stack'
 
 class ActiveRecord::Base
   class << self
@@ -19,9 +20,8 @@ class ActiveRecord::Base
     #
     def connection_handler(spec_symbol = nil)
       return @@connection_handlers_by_db[spec_symbol] if spec_symbol
-      if ! @@excluded_models.include?(self) && Thread.current[:activerecord_use_connection]
-        @@connection_handlers_by_db[Thread.current[:activerecord_use_connection]] ||=
-            ActiveRecord::ConnectionAdapters::ConnectionHandler.new
+      if !@@excluded_models.include?(self) && ConnectionStack.active?
+        @@connection_handlers_by_db[ConnectionStack.peek] ||= ActiveRecord::ConnectionAdapters::ConnectionHandler.new
       else
         orig_connection_handler
       end
@@ -35,10 +35,7 @@ class ActiveRecord::Base
     def using_connection(db)
       raise "block required" unless block_given?
 
-      # don't support nested calls for now, should be easy to implement later using a stack
-      raise "already using connection #{Thread.current[:activerecord_use_connection]}" if Thread.current[:activerecord_use_connection]
-
-      Thread.current[:activerecord_use_connection] = db
+      ConnectionStack.push db
 
       unless ActiveRecord::Base.connection_handler.retrieve_connection_pool(ActiveRecord::Base)
         ActiveRecord::Base.establish_connection(db)
@@ -48,7 +45,7 @@ class ActiveRecord::Base
 
     ensure
       ActiveRecord::Base.connection_handler.clear_active_connections! rescue puts "ignoring error in clear_active_connections: #{$!.class} #{$!.message}"
-      Thread.current[:activerecord_use_connection] = nil
+      ConnectionStack.pop
     end
 
     # Switches the connection to the slave db, which is infered from the current environment. Example, given the following
