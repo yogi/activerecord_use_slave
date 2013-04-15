@@ -35,9 +35,6 @@ class ActiveRecord::Base
     def using_connection(db)
       raise "block required" unless block_given?
 
-      # don't support nested calls for now, should be easy to implement later using a stack
-      raise "already using connection #{Thread.current[:activerecord_use_connection]}" if Thread.current[:activerecord_use_connection]
-
       ConnectionStack.push db
 
       unless ActiveRecord::Base.connection_handler.retrieve_connection_pool(ActiveRecord::Base)
@@ -48,7 +45,6 @@ class ActiveRecord::Base
 
     ensure
       ActiveRecord::Base.connection_handler.clear_active_connections! rescue puts "ignoring error in clear_active_connections: #{$!.class} #{$!.message}"
-      #Thread.current[:activerecord_use_connection] = nil
       ConnectionStack.pop
     end
 
