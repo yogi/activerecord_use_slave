@@ -1,6 +1,7 @@
+gem 'test-unit'
 require 'test/unit'
 require 'active_record'
-require 'activerecord_use_slave'
+require File.expand_path('../../lib/activerecord_use_slave', __FILE__)
 require 'thread'
 require 'pp'
 

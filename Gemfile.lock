@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    activerecord_use_slave (0.0.4)
+    activerecord_use_slave (0.0.5)
       activerecord
 
 GEM
