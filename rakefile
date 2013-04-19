@@ -12,7 +12,7 @@ Rake::TestTask.new do |t|
   t.libs << 'test'
   t.test_files = FileList['test/**/*.rb']
 end
-task :test => [:migrate_test_db, :migrate_slave_db]
+task :test => [:migrate_test_db, :migrate_slave_db, :migrate_slave_db2]
 
 desc "Run tests"
 task :default => :test
@@ -25,6 +25,18 @@ end
 task :migrate_slave_db do
   begin
     ENV["DB"] = "test_slave"
+    Rake::Task['environment'].execute
+    Rake::Task['db:create'].execute
+    Rake::Task["db:migrate"].execute
+  ensure
+    ENV["DB"] = "test"
+    Rake::Task['environment'].execute
+  end
+end
+
+task :migrate_slave_db2 do
+  begin
+    ENV["DB"] = "test_slave2"
     Rake::Task['environment'].execute
     Rake::Task['db:create'].execute
     Rake::Task["db:migrate"].execute
